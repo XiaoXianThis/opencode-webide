@@ -4,11 +4,13 @@ import { useOpencodeEvents } from "@/lib/events";
 import { useMessagesStore } from "@/store/messages";
 import { useSessionsStore } from "@/store/sessions";
 import { useTodosStore } from "@/store/todos";
+import { usePermissionsStore } from "@/store/permissions";
 import { TopBar } from "@/components/layout/TopBar";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { SessionSidebar } from "@/components/sessions/SessionSidebar";
 import { WorkspaceCenter } from "@/components/workspace/WorkspaceCenter";
 import { ChatPanel } from "@/components/chat/ChatPanel";
+import { PermissionCenter } from "@/components/permissions/PermissionCenter";
 
 export function App() {
   const onEvent = useCallback((event: Event) => {
@@ -17,6 +19,8 @@ export function App() {
     // Forward todo snapshots to the todos store so the TodoTool view stays
     // in sync after the underlying tool call resolves.
     useTodosStore.getState().applyEvent(event);
+    // Permission prompts and replies feed the HITL queue.
+    usePermissionsStore.getState().applyEvent(event);
 
     // Mirror session lifecycle into the sessions list.
     if (
@@ -49,6 +53,7 @@ export function App() {
         <ChatPanel />
       </div>
       <StatusBar />
+      <PermissionCenter />
     </div>
   );
 }

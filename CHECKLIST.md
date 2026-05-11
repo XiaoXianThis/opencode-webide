@@ -97,19 +97,22 @@
 
 ## M4 HITL 权限审批
 
-- [ ] **store** `src/client/store/permissions.ts`
-  - state: `Record<sessionID, Permission[]>` 队列；`reply(id, response, remember)` 调 `oc.session.permissionRespond`（确认 SDK 方法名）
-  - **测试** `permissions.test.ts`：`permission.updated` 入队（去重）；`permission.replied` 出队；`reply` 调用上游
-- [ ] **applyEvent 扩展**：messages store 也要清掉对应 part 的 pending 状态
-  - **测试**：补到 `messages.test.ts`
-- [ ] **PermissionDialog 组件**
-  - 显示 title、metadata、callID 关联到的 ToolCard
-  - 按钮：允许一次 / 始终允许 / 拒绝
-  - **测试** `PermissionDialog.test.tsx`：点击三个按钮分别用对应参数调 `reply`；ESC 等于 reject
-- [ ] **PermissionCenter 容器**
-  - 多请求时 stack；新请求 toast 提示
-  - **测试**：多 permission 排队展示；reply 后下一个上浮
-- [ ] **集成**：在 ChatPanel 顶部插入红点提示有 pending permission
+- [x] **store** `src/client/store/permissions.ts`
+  - state: `Record<sessionID, Permission[]>` 队列 + `pending: Record<id, true>` 用于乐观 UI；`reply(perm, response)` 调 `oc.postSessionIdPermissionsPermissionId`（SDK 顶层方法，body `{ response: "once"|"always"|"reject" }`）
+  - 失败时把请求重新塞回队首便于重试；`head(sessionID)` / `totalCount()` / `clear()` 选择器
+  - **测试** `store/__tests__/permissions.test.ts`（12 项）：入队 / 同 id 去重替换 / 多个排队 / replied 出队 / 未知 session 不崩 / reply 调上游 + 乐观去队 / 三种 response / 失败重新入队首 / 选择器
+- [x] **applyEvent 路由**：`app.tsx` 把 `permission.*` 事件转发给 permissions store；messages store 暂不主动改 part 状态（opencode 服务端会 emit 权威 `message.part.updated`，避免客户端写入抖动）
+- [x] **PermissionDialog 组件** `src/client/components/permissions/PermissionDialog.tsx`
+  - 用纯 fixed overlay（不走 HeroUI Modal，避开 react-aria Modal 在 happy-dom 下的 sizing 卡顿）；`role="dialog" aria-modal`；显示 title / type+callID / metadata 列表
+  - 三按钮：拒绝 / 允许一次 / 始终允许；ESC 全局监听 → reject；`isReplying` 时禁用全部按钮
+  - **测试** `permissions/__tests__/PermissionDialog.test.tsx`（9 项）：title+metadata 渲染 / 排队 chip / 三按钮分别带正确参数调 onReply / ESC=reject / 进行中禁用 / 空 metadata 不渲染区块
+- [x] **PermissionCenter 容器** `src/client/components/permissions/PermissionCenter.tsx`
+  - 订阅 active session 的队首；选择器只取桶引用以避开 zustand 引用相等问题；`busyId` 进度
+  - 跨 session 隔离（其他会话的 permission 不打扰当前 UI）
+  - **测试** `permissions/__tests__/PermissionCenter.test.tsx`（4 项）：空队列不渲染 / 跨 session 不显示 / 队列上浮 + SDK 调用断言 / 队列清空后关闭
+- [x] **集成**：`ChatPanel` 顶部 `ShieldAlert` 计数 chip（`data-testid="chat-permission-indicator"`），按 active session 过滤；`App` 根级挂载 `<PermissionCenter />`
+
+> 测试统计：M4 落地后 `bun test` = 155 pass / 6 skip / 0 fail / 16 snapshots，共 25 个测试文件（permissions store + dialog + center 共新增 25 项）。
 
 ---
 
@@ -233,8 +236,9 @@
 - ✅ 模型选择（M7 的前置：store + HeroUI ModelPicker + Composer 注入，单测 14 项，集成测试 skip）
 - ✅ UI 组件库迁移至 **HeroUI v3**（`@import "@heroui/styles"`，所有已实现组件改用 HeroUI primitives）
 - ✅ M3 per-tool 视图 + Markdown 渲染（130 pass / 6 skip / 0 fail，16 快照）
+- ✅ M4 HITL 权限审批（store + dialog + center + ChatPanel 红点；155 pass / 6 skip / 0 fail）
 - 🟡 M2 补测进行中（reducer + utils + Composer + models 已覆盖，其余待补）
-- ⬜ M4 起所有里程碑
+- ⬜ M5 起所有里程碑
 
 ## UI 组件库约定（HeroUI）
 

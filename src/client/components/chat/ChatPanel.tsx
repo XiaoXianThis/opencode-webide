@@ -1,8 +1,9 @@
 import { useEffect } from "react";
-import { MessageCircle, Square } from "lucide-react";
+import { MessageCircle, Square, ShieldAlert } from "lucide-react";
 import { Button, EmptyState } from "@heroui/react";
 import { useSessionsStore } from "@/store/sessions";
 import { useMessagesStore } from "@/store/messages";
+import { usePermissionsStore } from "@/store/permissions";
 import { MessageList } from "./MessageList";
 import { Composer } from "./Composer";
 
@@ -15,6 +16,9 @@ export function ChatPanel() {
     active ? (s.streaming[active.id] ?? false) : false,
   );
   const abort = useMessagesStore((s) => s.abort);
+  const pendingPermissions = usePermissionsStore((s) =>
+    active ? (s.bySession[active.id]?.length ?? 0) : 0,
+  );
 
   useEffect(() => {
     if (!active) return;
@@ -28,6 +32,16 @@ export function ChatPanel() {
         <span className="truncate text-sm font-medium text-foreground">
           {active?.title || (active ? "未命名会话" : "未选择会话")}
         </span>
+        {pendingPermissions > 0 && (
+          <span
+            className="ml-1 inline-flex items-center gap-1 rounded-full bg-danger/15 px-1.5 py-0.5 text-[10px] font-medium text-danger"
+            title={`${pendingPermissions} 个待审批权限`}
+            data-testid="chat-permission-indicator"
+          >
+            <ShieldAlert className="h-3 w-3" />
+            {pendingPermissions}
+          </span>
+        )}
         {streaming && active && (
           <Button
             size="sm"
