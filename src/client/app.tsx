@@ -3,6 +3,7 @@ import type { Event } from "@opencode-ai/sdk/client";
 import { useOpencodeEvents } from "@/lib/events";
 import { useMessagesStore } from "@/store/messages";
 import { useSessionsStore } from "@/store/sessions";
+import { useTodosStore } from "@/store/todos";
 import { TopBar } from "@/components/layout/TopBar";
 import { StatusBar } from "@/components/layout/StatusBar";
 import { SessionSidebar } from "@/components/sessions/SessionSidebar";
@@ -13,6 +14,9 @@ export function App() {
   const onEvent = useCallback((event: Event) => {
     // Forward message-related events to the messages store.
     useMessagesStore.getState().applyEvent(event);
+    // Forward todo snapshots to the todos store so the TodoTool view stays
+    // in sync after the underlying tool call resolves.
+    useTodosStore.getState().applyEvent(event);
 
     // Mirror session lifecycle into the sessions list.
     if (

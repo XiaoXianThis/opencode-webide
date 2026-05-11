@@ -1,0 +1,362 @@
+// Bun Snapshot v1, https://bun.sh/docs/test/snapshots
+
+exports[`PartRenderer (snapshot) renders text stably 1`] = `
+"div[data-testid=markdown]
+  p
+    strong
+    code"
+`;
+
+exports[`PartRenderer (snapshot) renders reasoning stably 1`] = `
+"div
+  h3
+    button
+      svg
+        path
+        path
+        path
+        path
+        path
+        path
+        path
+        path
+      span
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div"
+`;
+
+exports[`PartRenderer (snapshot) renders file stably 1`] = `
+"div
+  svg
+    path
+  span
+  span
+    span"
+`;
+
+exports[`PartRenderer (snapshot) renders subtask stably 1`] = `
+"div[data-tool=task]
+  h3
+    button
+      svg
+        path
+        circle
+        circle
+      span
+      span
+      span[data-testid=subtask-agent]
+        span
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+        pre[data-testid=subtask-prompt]"
+`;
+
+exports[`PartRenderer (snapshot) renders step-finish stably 1`] = `
+"div
+  hr[role=separator]
+  span
+  hr[role=separator]"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/bash/completed stably 1`] = `
+"div[data-tool=bash data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+      span
+      span
+      span
+      span[data-testid=bash-exit]
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+          div
+          pre[data-testid=bash-command]
+        div
+          div
+          pre[data-testid=bash-stdout]"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/edit/completed stably 1`] = `
+"div[data-tool=edit data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+        path
+      span
+      span
+      span
+      span
+        span[data-testid=edit-added]
+        span[data-testid=edit-removed]
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div[data-testid=edit-file]
+        div[data-testid=edit-diff]
+          div
+            span
+            span
+          div
+            span
+            span"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/read/completed stably 1`] = `
+"div[data-tool=read data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+        path
+        path
+        path
+      span
+      span
+      span
+      span[data-testid=read-line-count]
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div[data-testid=read-file]
+        pre[data-testid=read-content]
+          div
+            span
+            span"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/write/completed stably 1`] = `
+"div[data-tool=write data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+        path
+        path
+      span
+      span
+      span
+      span
+        span[data-testid=write-created-badge]
+          span
+        span
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div[data-testid=write-file]
+        pre[data-testid=write-content]"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/grep/completed stably 1`] = `
+"div[data-tool=grep data-status=completed]
+  h3
+    button
+      svg
+        path
+        circle
+      span
+      span
+      span
+      span
+        span[data-testid=grep-match-count]
+        span[data-testid=grep-file-count]
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+        div[data-testid=grep-results]
+          div
+            div[data-testid=grep-file]
+              span
+            div
+              span
+              span
+                span
+                mark[data-testid=grep-highlight]
+                span"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/glob/completed stably 1`] = `
+"div[data-tool=glob data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+        circle
+      span
+      span
+      span
+      span[data-testid=glob-count]
+        span
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+        ul[data-testid=glob-list]
+          li
+          li"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/webfetch/completed stably 1`] = `
+"div[data-tool=webfetch data-status=completed]
+  h3
+    button
+      svg
+        circle
+        path
+        path
+      span
+      span
+      span
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        a[data-testid=webfetch-link]
+        pre[data-testid=webfetch-output]"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/websearch/completed stably 1`] = `
+"div[data-tool=websearch data-status=completed]
+  h3
+    button
+      svg
+        path
+        circle
+        path
+      span
+      span
+      span
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+          div
+          span[data-testid=websearch-query]
+        pre[data-testid=websearch-output]"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/todowrite/completed stably 1`] = `
+"div[data-tool=todowrite data-status=completed]
+  h3
+    button
+      svg
+        path
+        path
+        path
+        path
+        rect
+      span
+      span
+      span
+      span
+      svg
+        circle
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/unknown/running stably 1`] = `
+"div[data-tool=experimental data-status=running]
+  h3
+    button
+      svg
+        path
+      span
+      span
+      svg
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+          div
+          pre"
+`;
+
+exports[`PartRenderer (snapshot) renders tool/unknown/error stably 1`] = `
+"div[data-tool=experimental data-status=error]
+  h3
+    button
+      svg
+        path
+      span
+      span
+      span
+      svg
+        circle
+        path
+        path
+      svg[role=presentation]
+        path
+  div[role=group]
+    div
+      div
+        div
+          div
+          pre
+        div[role=alert]
+          div
+          pre"
+`;

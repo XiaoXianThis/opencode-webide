@@ -60,29 +60,38 @@
 > 目标：替代当前的 `ToolPartView` 通用卡片，每个内置 tool 一个专门组件，含可折叠 header、diff、终端样式、错误样式。
 
 ### 公共
-- [ ] 抽出 `<ToolCard>` 容器（status icon、title、折叠、duration、cost）
-- [ ] `getToolView(toolName)` 路由表 + 默认回退
-- [ ] **测试** `src/client/components/chat/tools/__tests__/router.test.tsx`：未知工具回退到 `GenericTool`；已注册工具命中专用组件
+- [x] 抽出 `<ToolCard>` 容器（status icon、title、折叠、duration、tone）
+- [x] `getToolView(toolName)` 路由表 + 默认回退（`tools/router.tsx`）
+- [x] **测试** `tools/__tests__/router.test.tsx`（15 项）+ `tools/__tests__/ToolCard.test.tsx`（12 项，含 `formatDuration` / `getDuration`）
 
 ### Markdown 渲染（text part 升级）
-- [ ] 装 `react-markdown` + `remark-gfm` + `shiki`
-- [ ] `MarkdownView`：流式安全渲染（增量 props 不重渲染整棵树）
-- [ ] **测试** `MarkdownView.test.tsx`：渲染粗体/列表/代码块；代码块含语言标签；XSS 不逃逸
+- [x] 装 `react-markdown` + `remark-gfm`（shiki 因 WASM 体积重，留 TODO 后补）
+- [x] `MarkdownView`：流式安全渲染（`memo` 化；安全 URL 拦截；HTML 默认转义）；`TextPartView` 已切到该实现
+- [x] **测试** `chat/__tests__/MarkdownView.test.tsx`（9 项）：粗体/列表/代码块语言标签/链接 rel/XSS/GFM 表格
 
 ### per-tool 组件（每个一组测试 fixture）
-- [ ] `BashTool`：命令、stdout/stderr、退出码 — 测试三种状态 fixture
-- [ ] `EditTool`：file path + 行级 diff（`diff` 库或简单 LCS）— 测试 add/remove/modify 行渲染
-- [ ] `ReadTool`：折叠默认 5 行 + 行号 — 测试展开按钮
-- [ ] `WriteTool`：区分创建 vs 覆写（看 metadata）— 测试两种 badge
-- [ ] `GrepTool`：按文件分组、匹配高亮 — 测试匹配数 / 文件数
-- [ ] `GlobTool`：路径列表 + 数量 badge — 测试空结果
-- [ ] `WebFetchTool` / `WebSearchTool`：URL + 摘要 — 测试 URL 点击安全
-- [ ] `TodoTool`：listen `todo.updated`，按 status 分组 — 测试 4 种状态图标
-- [ ] `TaskTool`（subtask）：子 agent 名 + prompt 折叠 — 测试 prompt 折叠
-- [ ] `LspDiagnosticsTool`（如有）
+- [x] `BashTool`：命令、stdout/stderr、退出码 chip（4 项测试）
+- [x] `EditTool`：file basename + 行级 LCS diff（5 项测试，含 `tools/diff.ts` 7 项纯函数测试）
+- [x] `ReadTool`：默认 5 行折叠 + 展开按钮 + 偏移行号（4 项测试）
+- [x] `WriteTool`：`metadata.created` 区分 created / overwritten badge（3 项测试）
+- [x] `GrepTool`：按文件分组、`<mark>` 高亮、匹配/文件数（4 项测试，含正则容错）
+- [x] `GlobTool`：路径列表 + 数量 chip + 空状态（2 项测试）
+- [x] `WebFetchTool`：仅 http(s) 链接渲染为 `<a>`，否则纯文本（2 项测试，rel=noopener noreferrer nofollow）
+- [x] `WebSearchTool`：query + 输出摘要（1 项测试）
+- [x] `TodoTool`：监听 `todo.updated`（`store/todos.ts`，5 项 store 测试），按 status 分组 + 计数（3 项组件测试）
+- [x] `TaskTool`（subtask）→ `parts/SubtaskPartView.tsx`：agent chip + 折叠 prompt（3 项测试）
+- [x] `GenericTool`：未知工具回退（2 项测试）
+- [ ] `LspDiagnosticsTool`（如有）— 暂未实现，等 opencode 暴露相应 metadata
 
 ### 验收测试
-- [ ] **快照** `PartRenderer.snapshot.test.tsx`：把每种 part fixture 渲染一遍，截屏快照（防止意外样式回归）
+- [x] **快照** `chat/__tests__/PartRenderer.snapshot.test.tsx`：16 个 fixture（含 text/reasoning/file/subtask/step-finish + 11 种 tool 状态）走结构化 summarise，避免 Tailwind class 噪声
+
+### 落地变更
+- 删除 `parts/ToolPartView.tsx`，`PartRenderer.tsx` 的 `tool` 分支改走 `ToolPartRouter`，`subtask` 改路由到 `SubtaskPartView`
+- `app.tsx` 在 `onEvent` 里同时把事件转发给 `useTodosStore.applyEvent`（`todo.updated` 用）
+- 新增 store：`store/todos.ts`（`bySession` 快照映射）
+
+> 测试统计：M3 落地后 `bun test` = 130 pass / 6 skip（ModelPicker 历史 skip）/ 0 fail / 16 snapshots，共 22 个测试文件。
 
 ---
 
@@ -223,8 +232,9 @@
 - ✅ M2 SSE 流式聊天 + abort + 重连回填
 - ✅ 模型选择（M7 的前置：store + HeroUI ModelPicker + Composer 注入，单测 14 项，集成测试 skip）
 - ✅ UI 组件库迁移至 **HeroUI v3**（`@import "@heroui/styles"`，所有已实现组件改用 HeroUI primitives）
+- ✅ M3 per-tool 视图 + Markdown 渲染（130 pass / 6 skip / 0 fail，16 快照）
 - 🟡 M2 补测进行中（reducer + utils + Composer + models 已覆盖，其余待补）
-- ⬜ M3 起所有里程碑
+- ⬜ M4 起所有里程碑
 
 ## UI 组件库约定（HeroUI）
 
