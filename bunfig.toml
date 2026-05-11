@@ -1,0 +1,7 @@
+[serve.static]
+plugins = ["bun-plugin-tailwind"]
+
+[test]
+# Order matters: register-dom.ts must run first so @testing-library/dom can
+# bind to `document.body` when it is imported by setup.ts.
+preload = ["./src/test/register-dom.ts", "./src/test/setup.ts"]
