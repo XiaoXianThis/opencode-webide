@@ -1,11 +1,11 @@
 import { env } from "./env";
 
 /**
- * SSE pass-through for /api/events -> opencode /event.
+ * SSE pass-through for /api/events -> opencode /global/event.
  * We deliberately stream the upstream body bytes verbatim to preserve framing.
  */
 export async function proxyEvents(req: Request): Promise<Response> {
-  const upstreamUrl = `${env.OPENCODE_URL}/event`;
+  const upstreamUrl = `${env.OPENCODE_URL}/global/event`;
 
   const headers = new Headers({ accept: "text/event-stream" });
   if (env.basicAuthHeader) headers.set("authorization", env.basicAuthHeader);

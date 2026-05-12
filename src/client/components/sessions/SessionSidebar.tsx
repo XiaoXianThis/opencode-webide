@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import type { Key } from "react";
-import { Plus, Trash2, MessageSquare, RefreshCw } from "lucide-react";
+import { Plus, Trash2, RefreshCw } from "lucide-react";
 import {
   Button,
   EmptyState,
@@ -11,7 +11,7 @@ import {
   Tooltip,
 } from "@heroui/react";
 import { useSessionsStore } from "@/store/sessions";
-import { formatRelativeTime } from "@/lib/utils";
+import { formatNewSessionTitle, formatRelativeTime, formatSessionTitle } from "@/lib/utils";
 
 export function SessionSidebar() {
   const { sessions, activeId, status, error, refresh, create, remove, setActive } =
@@ -25,7 +25,7 @@ export function SessionSidebar() {
   const handleCreate = async () => {
     setBusy(true);
     try {
-      await create();
+      await create(formatNewSessionTitle());
     } finally {
       setBusy(false);
     }
@@ -103,9 +103,8 @@ export function SessionSidebar() {
           >
             {sessions.map((s) => (
               <ListBox.Item key={s.id} id={s.id} textValue={s.title || s.id}>
-                <MessageSquare className="h-4 w-4 shrink-0 opacity-70" />
                 <Label className="min-w-0 flex-1 truncate">
-                  {s.title || "未命名会话"}
+                  {formatSessionTitle(s.title)}
                 </Label>
                 <span className="shrink-0 text-[10px] text-default-500">
                   {formatRelativeTime(s.time?.updated)}

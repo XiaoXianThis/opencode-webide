@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import type { Event } from "@opencode-ai/sdk/client";
+import type { Event, GlobalEvent } from "@opencode-ai/sdk/client";
 import { useConnectionStore } from "@/store/connection";
 
 export type OpencodeEventHandlers = {
@@ -42,13 +42,16 @@ function ensureConnection(): void {
 
   source.onmessage = (ev) => {
     ping();
-    let parsed: Event;
+    let envelope: GlobalEvent;
     try {
-      parsed = JSON.parse(ev.data) as Event;
+      envelope = JSON.parse(ev.data) as GlobalEvent;
     } catch {
       return;
     }
-    for (const h of eventHandlers) h(parsed);
+    // opencode /global/event wraps each event as { directory, payload: Event }.
+    const event: Event | undefined = envelope?.payload;
+    if (!event) return;
+    for (const h of eventHandlers) h(event);
   };
 
   source.onerror = () => {
