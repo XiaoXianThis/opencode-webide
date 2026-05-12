@@ -33,23 +33,23 @@
 
 > M2 已实现但只覆盖了 messages reducer 与 utils。其余关键路径必须补测后再开 M3。
 
-- [ ] **`sessions` store**：`src/client/store/__tests__/sessions.test.ts`
+- [x] **`sessions` store**：`src/client/store/__tests__/sessions.test.ts`
   - `mock.module` 替换 `@/lib/opencode`
   - 断言：`refresh()` 按 `time.updated` 降序排序；`create()` 把新会话置顶并设为 active；`remove()` 调 `oc.session.delete({ path: { id } })` 并在响应后从列表剔除；`rename()` 用 `oc.session.update` 并替换条目
   - 断言：`activeId` 在删除当前活动会话后回退到列表第一项；列表空时回退 `null`
-- [ ] **events 单例**：`src/client/lib/__tests__/events.test.ts`
+- [x] **events 单例**：`src/client/lib/__tests__/events.test.ts`
   - 用 happy-dom 的 EventSource，手动 `dispatchEvent('open')` / `'message'` / `'error'`
   - 断言：多次调用 `useOpencodeEvents` 只创建一个 EventSource；handler 在卸载后不再被触发；`onReconnected` 仅在第二次及之后的 open 触发；error → 退避重连
-- [ ] **BFF reverse proxy**：`src/server/__tests__/proxy.test.ts`
+- [x] **BFF reverse proxy**：`src/server/__tests__/proxy.test.ts`
   - 启一个 mock upstream `Bun.serve` 监听任意端口，注入到 `OPENCODE_URL`，再启 BFF 的 `proxyApi`
   - 断言：URL 重写（`/api/foo?x=1` → upstream `/foo?x=1`）；Basic Auth header 注入；上游返回的 JSON 原样回传；上游 502 时 BFF 返回 `502 + json`
-- [ ] **BFF SSE pass-through**：`src/server/__tests__/events.test.ts`
+- [x] **BFF SSE pass-through**：`src/server/__tests__/events.test.ts`
   - mock upstream 返回 `text/event-stream` 流，逐块写入
   - 断言：`Content-Type: text/event-stream`；客户端能读到 chunk；req.signal abort 时 upstream 也被取消（用 spy AbortController）
 - [x] **`Composer`**：`src/client/components/chat/__tests__/Composer.test.tsx`
   - mock messages store 的 `sendPrompt` / `abort`，mock models store 以提供 selected model
   - 6 项断言：Enter 触发 send 并带上 model、Shift+Enter 换行、空字符串不发送、按钮 disabled/enabled 切换、未选 model 时传 undefined fallback、streaming 切到 abort 按钮
-- [ ] **`MessageList`**：`src/client/components/chat/__tests__/MessageList.test.tsx`
+- [x] **`MessageList`**：`src/client/components/chat/__tests__/MessageList.test.tsx`
   - 准备 fixture session data
   - 断言：按 `messageOrder` 渲染；空状态文案；error 状态展示；scroll 到底时新消息追加自动滚动，未到底时不滚
 
@@ -237,7 +237,7 @@
 - ✅ UI 组件库迁移至 **HeroUI v3**（`@import "@heroui/styles"`，所有已实现组件改用 HeroUI primitives）
 - ✅ M3 per-tool 视图 + Markdown 渲染（130 pass / 6 skip / 0 fail，16 快照）
 - ✅ M4 HITL 权限审批（store + dialog + center + ChatPanel 红点；155 pass / 6 skip / 0 fail）
-- 🟡 M2 补测进行中（reducer + utils + Composer + models 已覆盖，其余待补）
+- ✅ M2 补测完成（sessions/events/proxy/SSE/MessageList 已补齐；当前 `bun test` = 175 pass / 6 skip / 0 fail / 16 snapshots，共 30 个测试文件）
 - ⬜ M5 起所有里程碑
 
 ## UI 组件库约定（HeroUI）
