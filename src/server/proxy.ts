@@ -18,6 +18,8 @@ const RES_HEADERS_BLOCKLIST = new Set([
   "content-length",
 ]);
 
+type StreamingRequestInit = RequestInit & { duplex?: "half" };
+
 function buildUpstreamHeaders(req: Request): Headers {
   const out = new Headers();
   req.headers.forEach((value, key) => {
@@ -44,7 +46,7 @@ export async function proxyApi(req: Request): Promise<Response> {
   const upstreamPath = url.pathname.replace(/^\/api/, "") || "/";
   const upstreamUrl = `${env.OPENCODE_URL}${upstreamPath}${url.search}`;
 
-  const init: RequestInit = {
+  const init: StreamingRequestInit = {
     method: req.method,
     headers: buildUpstreamHeaders(req),
     redirect: "manual",
@@ -52,7 +54,6 @@ export async function proxyApi(req: Request): Promise<Response> {
 
   if (req.method !== "GET" && req.method !== "HEAD") {
     init.body = req.body;
-    // @ts-expect-error - duplex is required by undici/Bun for streaming bodies
     init.duplex = "half";
   }
 

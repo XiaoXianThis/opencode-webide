@@ -1,20 +1,42 @@
 // Server-side env loader. Bun auto-loads .env into process.env.
 
-const PORT = Number(process.env.PORT ?? 3000);
-const OPENCODE_URL = (process.env.OPENCODE_URL ?? "http://127.0.0.1:4096").replace(/\/+$/, "");
-const OPENCODE_USERNAME = process.env.OPENCODE_USERNAME ?? "opencode";
-const OPENCODE_PASSWORD = process.env.OPENCODE_PASSWORD ?? "";
+function port(): number {
+  return Number(process.env.PORT ?? 3000);
+}
+
+function opencodeUrl(): string {
+  return (process.env.OPENCODE_URL ?? "http://127.0.0.1:4096").replace(/\/+$/, "");
+}
+
+function opencodeUsername(): string {
+  return process.env.OPENCODE_USERNAME ?? "opencode";
+}
+
+function opencodePassword(): string {
+  return process.env.OPENCODE_PASSWORD ?? "";
+}
 
 function basicAuthHeader(): string | undefined {
-  if (!OPENCODE_PASSWORD) return undefined;
-  const token = Buffer.from(`${OPENCODE_USERNAME}:${OPENCODE_PASSWORD}`).toString("base64");
+  const password = opencodePassword();
+  if (!password) return undefined;
+  const token = Buffer.from(`${opencodeUsername()}:${password}`).toString("base64");
   return `Basic ${token}`;
 }
 
 export const env = {
-  PORT,
-  OPENCODE_URL,
-  OPENCODE_USERNAME,
-  OPENCODE_PASSWORD,
-  basicAuthHeader: basicAuthHeader(),
+  get PORT() {
+    return port();
+  },
+  get OPENCODE_URL() {
+    return opencodeUrl();
+  },
+  get OPENCODE_USERNAME() {
+    return opencodeUsername();
+  },
+  get OPENCODE_PASSWORD() {
+    return opencodePassword();
+  },
+  get basicAuthHeader() {
+    return basicAuthHeader();
+  },
 };
