@@ -7,7 +7,7 @@ export function TopBar() {
       <Terminal className="h-4 w-4 text-primary" />
       <span className="text-sm font-semibold text-foreground">opencode WebIDE</span>
       <Chip size="sm" variant="flat" color="default" className="text-[10px] uppercase">
-        M2
+        M6
       </Chip>
     </header>
   );
