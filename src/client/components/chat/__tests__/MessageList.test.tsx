@@ -1,7 +1,8 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
 import { act, render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { useSyncExternalStore } from "react";
-import type { AssistantMessage, Part, UserMessage } from "@opencode-ai/sdk/client";
+import type { AssistantMessage, Part, Session, UserMessage } from "@opencode-ai/sdk/client";
 
 type SessionFixture = {
   messageOrder: string[];
@@ -24,9 +25,21 @@ type MockMessagesStore = {
   setState: (update: StoreUpdate) => void;
 };
 
+type SessionsState = {
+  sessions: Session[];
+  fork: ReturnType<typeof mock>;
+  revert: ReturnType<typeof mock>;
+  unrevert: ReturnType<typeof mock>;
+  activeId?: string | null;
+  error?: string | null;
+};
+
+type SessionStoreUpdate = Partial<SessionsState> | ((state: SessionsState) => Partial<SessionsState>);
+
 const SID = "ses_message_list";
 const listeners = new Set<() => void>();
 let messagesState: MessagesState = emptyState();
+let sessionsState: SessionsState = emptySessionsState();
 
 function emptyState(): MessagesState {
   return { sessions: {}, loading: {}, loadError: {}, streaming: {} };
@@ -52,7 +65,40 @@ const useMessagesStore: MockMessagesStore = Object.assign(
   },
 );
 
+function emptySessionsState(): SessionsState {
+  return {
+    sessions: [],
+    fork: mock(async () => null),
+    revert: mock(async () => {}),
+    unrevert: mock(async () => {}),
+  };
+}
+
+function session(overrides: Partial<Session> = {}): Session {
+  return {
+    id: SID,
+    projectID: "project",
+    directory: "/repo",
+    title: "Session",
+    version: "1.0.0",
+    time: { created: 1, updated: 2 },
+    ...overrides,
+  };
+}
+
 mock.module("@/store/messages", () => ({ useMessagesStore }));
+mock.module("@/store/sessions", () => ({
+  useSessionsStore: Object.assign(
+    <T,>(selector: (state: SessionsState) => T): T => selector(sessionsState),
+    {
+      getState: () => sessionsState,
+      setState: (update: SessionStoreUpdate) => {
+        const patch = typeof update === "function" ? update(sessionsState) : update;
+        sessionsState = { ...sessionsState, ...patch };
+      },
+    },
+  ),
+}));
 
 const { MessageList } = await import("../MessageList");
 
@@ -157,6 +203,7 @@ function defineScrollMetrics(
 
 beforeEach(() => {
   messagesState = emptyState();
+  sessionsState = emptySessionsState();
   listeners.clear();
 });
 
@@ -172,6 +219,32 @@ describe("MessageList", () => {
 
     expect(second.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     expect(first.compareDocumentPosition(assistant) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
+  it("marks messages after the revert point as muted and shows restore", () => {
+    setSession(sessionFixture(["msg_user_1", "msg_assistant_1", "msg_user_2"]));
+    sessionsState.sessions = [session({ revert: { messageID: "msg_assistant_1" } })];
+
+    render(<MessageList sessionID={SID} />);
+
+    expect(screen.getByTestId("message-msg_user_2")).toHaveAttribute("data-reverted", "true");
+    expect(screen.getByRole("button", { name: "恢复会话" })).toBeInTheDocument();
+  });
+
+  it("fork, revert, and unrevert buttons call the sessions store", async () => {
+    const user = userEvent.setup();
+    setSession(sessionFixture(["msg_user_1", "msg_assistant_1"]));
+    sessionsState.sessions = [session({ revert: { messageID: "msg_assistant_1" } })];
+
+    render(<MessageList sessionID={SID} />);
+
+    await user.click(screen.getByRole("button", { name: "分叉消息 msg_user_1" }));
+    await user.click(screen.getByRole("button", { name: "回退到消息 msg_user_1" }));
+    await user.click(screen.getByRole("button", { name: "恢复会话" }));
+
+    expect(sessionsState.fork).toHaveBeenCalledWith(SID, { messageID: "msg_user_1" });
+    expect(sessionsState.revert).toHaveBeenCalledWith(SID, { messageID: "msg_user_1" });
+    expect(sessionsState.unrevert).toHaveBeenCalledWith(SID);
   });
 
   it("renders the empty state when the session has no messages", () => {

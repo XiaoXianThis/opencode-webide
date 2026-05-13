@@ -1,9 +1,10 @@
 import { useEffect } from "react";
-import { MessageCircle, Square, ShieldAlert } from "lucide-react";
+import { MessageCircle, Square, ShieldAlert, Sparkles } from "lucide-react";
 import { Button, EmptyState } from "@heroui/react";
 import { useSessionsStore } from "@/store/sessions";
 import { useMessagesStore } from "@/store/messages";
 import { usePermissionsStore } from "@/store/permissions";
+import { useModelsStore } from "@/store/models";
 import { MessageList } from "./MessageList";
 import { Composer } from "./Composer";
 
@@ -16,6 +17,9 @@ export function ChatPanel() {
     active ? (s.streaming[active.id] ?? false) : false,
   );
   const abort = useMessagesStore((s) => s.abort);
+  const summarize = useSessionsStore((s) => s.summarize);
+  const selectedProviderID = useModelsStore((s) => s.selectedProviderID);
+  const selectedModelID = useModelsStore((s) => s.selectedModelID);
   const pendingPermissions = usePermissionsStore((s) =>
     active ? (s.bySession[active.id]?.length ?? 0) : 0,
   );
@@ -42,12 +46,25 @@ export function ChatPanel() {
             {pendingPermissions}
           </span>
         )}
+        {active && selectedProviderID && selectedModelID && (
+          <Button
+            size="sm"
+            variant="light"
+            className="ml-auto"
+            startContent={<Sparkles className="h-3 w-3" />}
+            onPress={() =>
+              void summarize(active.id, { providerID: selectedProviderID, modelID: selectedModelID })
+            }
+          >
+            总结
+          </Button>
+        )}
         {streaming && active && (
           <Button
             size="sm"
             variant="flat"
             color="danger"
-            className="ml-auto"
+            className={selectedProviderID && selectedModelID ? "" : "ml-auto"}
             startContent={<Square className="h-3 w-3" />}
             onPress={() => void abort(active.id)}
           >

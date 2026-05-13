@@ -1,12 +1,17 @@
 import { useEffect, useRef } from "react";
 import { Spinner } from "@heroui/react";
 import { useMessagesStore } from "@/store/messages";
+import { useSessionsStore } from "@/store/sessions";
 import { MessageItem } from "./MessageItem";
 
 export function MessageList({ sessionID }: { sessionID: string }) {
   const data = useMessagesStore((s) => s.sessions[sessionID]);
   const loading = useMessagesStore((s) => s.loading[sessionID]);
   const error = useMessagesStore((s) => s.loadError[sessionID]);
+  const active = useSessionsStore((s) => s.sessions.find((session) => session.id === sessionID) ?? null);
+  const fork = useSessionsStore((s) => s.fork);
+  const revert = useSessionsStore((s) => s.revert);
+  const unrevert = useSessionsStore((s) => s.unrevert);
   const containerRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
 
@@ -66,7 +71,20 @@ export function MessageList({ sessionID }: { sessionID: string }) {
         const parts = bucket
           ? bucket.partOrder.map((pid) => bucket.byId[pid]).filter((p): p is NonNullable<typeof p> => Boolean(p))
           : [];
-        return <MessageItem key={mid} info={info} parts={parts} />;
+        const revertCreated = active?.revert ? data.messages[active.revert.messageID]?.time?.created : undefined;
+        const isAfterRevert = revertCreated !== undefined && (info.time?.created ?? 0) > revertCreated;
+        return (
+          <MessageItem
+            key={mid}
+            info={info}
+            parts={parts}
+            revert={active?.revert}
+            isAfterRevert={isAfterRevert}
+            onFork={(messageID) => void fork(sessionID, { messageID })}
+            onRevert={(messageID) => void revert(sessionID, { messageID })}
+            onUnrevert={() => void unrevert(sessionID)}
+          />
+        );
       })}
     </div>
   );
