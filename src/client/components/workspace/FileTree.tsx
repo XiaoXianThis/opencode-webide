@@ -25,7 +25,7 @@ export function FileTree() {
   }, [hasRoot, refresh, refreshStatus]);
 
   return (
-    <aside className="flex h-full w-72 shrink-0 flex-col border-r border-default-200 bg-content1">
+    <aside className="hidden h-full w-56 shrink-0 flex-col border-r border-default-200 bg-content1 xl:flex 2xl:w-72">
       <header className="flex h-10 items-center justify-between border-b border-default-200 px-3">
         <span className="text-sm font-semibold text-foreground">文件</span>
         {status === "loading" && <Spinner size="sm" />}
@@ -34,7 +34,7 @@ export function FileTree() {
       {nodes.length === 0 && status === "ready" ? (
         <EmptyState className="m-3 gap-2 text-center"><div className="text-sm font-medium text-foreground">暂无文件</div></EmptyState>
       ) : (
-        <ScrollShadow className="min-h-0 flex-1 p-2">
+        <ScrollShadow className="min-h-0 flex-1 overflow-y-auto p-2">
           <div role="tree" aria-label="文件树" className="space-y-0.5">
             {nodes.slice(0, VIRTUAL_LIMIT).map((node) => <FileTreeItem key={node.path} node={node} depth={0} />)}
             {nodes.length > VIRTUAL_LIMIT && <div data-testid="file-tree-virtualized" className="px-2 py-1 text-tiny text-default-500">仅渲染前 {VIRTUAL_LIMIT} 项</div>}

@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 
 const messagesState = {
@@ -52,6 +52,20 @@ describe("Composer", () => {
     await user.type(textbox(), "hello{enter}");
     expect(messagesState.sendPrompt).toHaveBeenCalledTimes(1);
     expect(messagesState.sendPrompt).toHaveBeenCalledWith("ses_1", "hello", {
+      agent: "build",
+      model: { providerID: "anthropic", modelID: "claude-sonnet" },
+    });
+    expect(textbox().value).toBe("");
+  });
+
+  it("Cmd+Enter sends from the composer", async () => {
+    const user = userEvent.setup();
+    render(<Composer sessionID="ses_1" />);
+
+    await user.type(textbox(), "ship it");
+    await user.keyboard("{Meta>}{Enter}{/Meta}");
+
+    expect(messagesState.sendPrompt).toHaveBeenCalledWith("ses_1", "ship it", {
       agent: "build",
       model: { providerID: "anthropic", modelID: "claude-sonnet" },
     });
@@ -116,5 +130,38 @@ describe("Composer", () => {
     render(<Composer sessionID="ses_1" />);
     await user.click(firstButton());
     expect(messagesState.abort).toHaveBeenCalledWith("ses_1");
+  });
+
+  it("drops files into the prompt as file parts", async () => {
+    const { container } = render(<Composer sessionID="ses_file" />);
+    const file = new File(["hello"], "note.txt", { type: "text/plain" });
+    const dropTarget = container.firstElementChild;
+    expect(dropTarget).toBeInstanceOf(HTMLElement);
+
+    fireEvent.drop(dropTarget, { dataTransfer: { files: [file], types: ["Files"] } });
+    await waitFor(() => expect(screen.getByText("note.txt")).toBeInTheDocument());
+    fireEvent.click(screen.getByRole("button", { name: "发送" }));
+
+    expect(messagesState.sendPrompt).toHaveBeenCalledTimes(1);
+    const call = messagesState.sendPrompt.mock.calls[0];
+    expect(call[0]).toBe("ses_file");
+    expect(call[1]).toBe("");
+    const options = call[2] as {
+      agent: string;
+      model: { providerID: string; modelID: string };
+      parts: Array<{ type: "file"; mime: string; filename: string; url: string }>;
+    };
+    expect(options).toMatchObject({
+      agent: "build",
+      model: { providerID: "anthropic", modelID: "claude-sonnet" },
+      parts: [
+        {
+          type: "file",
+          mime: "text/plain",
+          filename: "note.txt",
+        },
+      ],
+    });
+    expect(options.parts[0]!.url).toStartWith("data:text/plain");
   });
 });

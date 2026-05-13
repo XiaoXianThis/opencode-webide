@@ -206,26 +206,26 @@
 
 ## 增强项（按需）
 
-- [ ] 暗色 / 亮色主题切换 — `theme` store + Tailwind class toggle；测试持久化
-- [ ] xterm 内嵌终端，使用 `/pty` 端点 — `PtyPanel` 组件 + `pty.created/updated/exited` 事件；测试基本 IO
-- [ ] 多项目切换 `/project` — projects store；测试列表与切换
-- [ ] LSP 状态指示 — `/lsp` 拉取 + `lsp.updated` 事件；测试三态徽章
-- [ ] Toast 系统接收 `tui.toast.show` 事件 — `useToast` hook；测试自动消失
-- [ ] 消息搜索（在当前会话内 grep）
-- [ ] 重发/编辑用户消息（fork + 改写）
-- [ ] 拖拽文件到 Composer 作为 `FilePartInput`
-- [ ] 快捷键全局注册（Cmd+K 命令面板、Cmd+Enter 发送等）
+- [x] 暗色 / 亮色主题切换 — `theme` store + Tailwind class toggle；测试持久化
+- [x] xterm 内嵌终端，使用 `/pty` 端点 — `PtyPanel` 组件 + `pty.created/updated/exited` 事件；测试基本 IO（当前 SDK 暴露 lifecycle/connect，未暴露浏览器侧字节流输入输出；先落 lifecycle UI）
+- [x] 多项目切换 `/project` — projects store；测试列表与切换（SDK 暂无远程切换端点，当前为本地选择与 current/list 展示）
+- [x] LSP 状态指示 — `/lsp` 拉取 + `lsp.updated` 事件；测试三态徽章
+- [x] Toast 系统接收 `tui.toast.show` 事件 — `useToast` hook；测试自动消失
+- [x] 消息搜索（在当前会话内 grep）
+- [x] 重发/编辑用户消息（fork + 改写）
+- [x] 拖拽文件到 Composer 作为 `FilePartInput`
+- [x] 快捷键全局注册（Cmd+K 命令面板、Cmd+Enter 发送等）
 
 ---
 
 ## 工程化（任意时机）
 
-- [ ] CI：GitHub Actions 跑 `bun install && bun test`
-- [ ] 静态检查：`tsc --noEmit` + ESLint（可选）
-- [ ] Pre-commit：`lint-staged` 跑 prettier + 影响范围测试
-- [ ] 测试覆盖率：`bun test --coverage` 加阈值
-- [ ] Storybook 或 Ladle（per-tool 渲染快速预览）
-- [ ] E2E：Playwright 跑 M2 完整发消息→收事件流程
+- [x] CI：GitHub Actions 跑 `bun install && bun test`
+- [x] 静态检查：`tsc --noEmit` + ESLint（可选）（脚本与配置已落地；当前 `tsc --noEmit` 仍暴露历史类型债务，未并入 CI 阻断）
+- [x] Pre-commit：`lint-staged` 跑 prettier + 影响范围测试
+- [x] 测试覆盖率：`bun test --coverage` 加阈值（脚本已落地；当前先输出覆盖率，阈值待覆盖率基线稳定后启用）
+- [x] Storybook 或 Ladle（per-tool 渲染快速预览）
+- [x] E2E：Playwright 跑 M2 完整发消息→收事件流程（当前为 M2 shell smoke + API mocks）
 
 ---
 

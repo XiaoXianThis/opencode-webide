@@ -85,7 +85,8 @@ export function ModelPicker() {
   return (
     <Autocomplete
       aria-label="选择模型"
-      className="max-w-[260px]"
+      className="w-full min-w-0"
+      size="sm"
       selectedKey={selectedKey}
       onSelectionChange={handleSelection}
       isDisabled={status === "loading"}
@@ -118,7 +119,7 @@ export function ModelPicker() {
         <Autocomplete.Indicator />
       </Autocomplete.Trigger>
 
-      <Autocomplete.Popover>
+      <Autocomplete.Popover className="w-80 max-w-[calc(100vw-2rem)]">
         <Autocomplete.Filter>
           <SearchField aria-label="搜索模型">
             <SearchField.Group>
@@ -146,9 +147,9 @@ export function ModelPicker() {
                     id={keyOf(o)}
                     textValue={`${o.providerName} ${o.modelName} ${o.modelID}`}
                   >
-                    <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                       <div className="flex items-center gap-1.5">
-                        <Label className="truncate font-medium">{o.modelName}</Label>
+                        <Label className="min-w-0 truncate font-medium">{o.modelName}</Label>
                         {o.isDefault && (
                           <span className="shrink-0 rounded bg-primary-500/20 px-1 text-[9px] uppercase tracking-wide text-primary-600">
                             default

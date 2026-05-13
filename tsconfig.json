@@ -1,7 +1,7 @@
 {
   "compilerOptions": {
     // Environment setup & latest features
-    "lib": ["ESNext"],
+    "lib": ["ESNext", "DOM", "DOM.Iterable"],
     "target": "ESNext",
     "module": "Preserve",
     "moduleDetection": "force",
@@ -32,5 +32,5 @@
       "@/*": ["src/client/*"]
     }
   },
-  "include": ["index.ts", "src/**/*.ts", "src/**/*.tsx"]
+  "include": ["index.ts", "src/**/*.ts", "src/**/*.tsx", "playwright.config.ts", "e2e/**/*.ts"]
 }

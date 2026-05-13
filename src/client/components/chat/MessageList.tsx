@@ -4,7 +4,14 @@ import { useMessagesStore } from "@/store/messages";
 import { useSessionsStore } from "@/store/sessions";
 import { MessageItem } from "./MessageItem";
 
-export function MessageList({ sessionID }: { sessionID: string }) {
+function partText(part: unknown): string {
+  if (typeof part === "object" && part && "text" in part && typeof part.text === "string") {
+    return part.text;
+  }
+  return "";
+}
+
+export function MessageList({ sessionID, searchQuery = "" }: { sessionID: string; searchQuery?: string }) {
   const data = useMessagesStore((s) => s.sessions[sessionID]);
   const loading = useMessagesStore((s) => s.loading[sessionID]);
   const error = useMessagesStore((s) => s.loadError[sessionID]);
@@ -12,6 +19,7 @@ export function MessageList({ sessionID }: { sessionID: string }) {
   const fork = useSessionsStore((s) => s.fork);
   const revert = useSessionsStore((s) => s.revert);
   const unrevert = useSessionsStore((s) => s.unrevert);
+  const sendPrompt = useMessagesStore((s) => s.sendPrompt);
   const containerRef = useRef<HTMLDivElement>(null);
   const stickRef = useRef(true);
 
@@ -62,9 +70,26 @@ export function MessageList({ sessionID }: { sessionID: string }) {
     );
   }
 
+  const normalizedSearch = searchQuery.trim().toLowerCase();
+  const renderedMessages = data.messageOrder.filter((mid) => {
+    if (!normalizedSearch) return true;
+    const info = data.messages[mid];
+    const bucket = data.parts[mid];
+    const text = bucket ? bucket.partOrder.map((pid) => partText(bucket.byId[pid])).join("\n") : "";
+    return `${info?.role ?? ""}\n${text}`.toLowerCase().includes(normalizedSearch);
+  });
+
+  if (normalizedSearch && renderedMessages.length === 0) {
+    return (
+      <div className="flex flex-1 items-center justify-center text-xs text-default-500">
+        没有匹配的消息
+      </div>
+    );
+  }
+
   return (
     <div ref={containerRef} className="flex-1 overflow-y-auto">
-      {data.messageOrder.map((mid) => {
+      {renderedMessages.map((mid) => {
         const info = data.messages[mid];
         if (!info) return null;
         const bucket = data.parts[mid];
@@ -80,9 +105,15 @@ export function MessageList({ sessionID }: { sessionID: string }) {
             parts={parts}
             revert={active?.revert}
             isAfterRevert={isAfterRevert}
+            searchQuery={searchQuery}
             onFork={(messageID) => void fork(sessionID, { messageID })}
             onRevert={(messageID) => void revert(sessionID, { messageID })}
             onUnrevert={() => void unrevert(sessionID)}
+            onEditResend={(messageID) => {
+              const source = data.parts[messageID];
+              const text = source ? source.partOrder.map((pid) => partText(source.byId[pid])).join("\n").trim() : "";
+              if (text) void sendPrompt(sessionID, text, { messageID });
+            }}
           />
         );
       })}

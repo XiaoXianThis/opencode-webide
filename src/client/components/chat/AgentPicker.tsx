@@ -46,7 +46,8 @@ export function AgentPicker() {
   return (
     <Autocomplete
       aria-label="Select agent"
-      className="max-w-[220px]"
+      className="w-full min-w-0"
+      size="sm"
       selectedKey={selectedAgent}
       onSelectionChange={handleSelection}
       isDisabled={status === "loading"}
@@ -77,7 +78,7 @@ export function AgentPicker() {
         <Autocomplete.Indicator />
       </Autocomplete.Trigger>
 
-      <Autocomplete.Popover>
+      <Autocomplete.Popover className="w-72 max-w-[calc(100vw-2rem)]">
         <Autocomplete.Filter filter={filterAgentOptions}>
           <SearchField aria-label="Search agents">
             <SearchField.Group>
@@ -100,9 +101,9 @@ export function AgentPicker() {
                 id={option.id}
                 textValue={`${option.name} ${option.description ?? ""} ${option.mode}`}
               >
-                <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
                   <div className="flex items-center gap-1.5">
-                    <Label className="truncate font-medium">{option.name}</Label>
+                    <Label className="min-w-0 truncate font-medium">{option.name}</Label>
                     {option.builtIn && (
                       <span className="shrink-0 rounded bg-primary-500/20 px-1 text-[9px] uppercase tracking-wide text-primary-600">
                         built-in

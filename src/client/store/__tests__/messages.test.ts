@@ -1,12 +1,8 @@
 import { describe, it, expect, beforeEach, mock } from "bun:test";
-import type { Event, Part, UserMessage, AssistantMessage } from "@opencode-ai/sdk/client";
+import type { Event, Part, UserMessage, AssistantMessage, SessionPromptAsyncData } from "@opencode-ai/sdk/client";
 const promptAsyncFn = mock(async (_args: {
   path: { id: string };
-  body: {
-    agent?: string;
-    model?: { providerID: string; modelID: string };
-    parts: Array<{ type: "text"; text: string }>;
-  };
+  body: NonNullable<SessionPromptAsyncData["body"]>;
 }) => ({}));
 
 mock.module("@/lib/opencode", () => ({
@@ -81,6 +77,46 @@ describe("messages.sendPrompt", () => {
         agent: "build",
         model: { providerID: "anthropic", modelID: "claude-sonnet" },
         parts: [{ type: "text", text: "hello" }],
+      },
+    });
+  });
+
+  it("sends file parts with optional text", async () => {
+    await useMessagesStore.getState().sendPrompt(SID, " see attached ", {
+      parts: [
+        {
+          type: "file",
+          mime: "text/plain",
+          filename: "note.txt",
+          url: "data:text/plain;base64,aGVsbG8=",
+        },
+      ],
+    });
+
+    expect(promptAsyncFn).toHaveBeenCalledWith({
+      path: { id: SID },
+      body: {
+        parts: [
+          { type: "text", text: "see attached" },
+          {
+            type: "file",
+            mime: "text/plain",
+            filename: "note.txt",
+            url: "data:text/plain;base64,aGVsbG8=",
+          },
+        ],
+      },
+    });
+  });
+
+  it("sends messageID when editing and resending a user message", async () => {
+    await useMessagesStore.getState().sendPrompt(SID, "rewritten", { messageID: "msg_user_1" });
+
+    expect(promptAsyncFn).toHaveBeenCalledWith({
+      path: { id: SID },
+      body: {
+        messageID: "msg_user_1",
+        parts: [{ type: "text", text: "rewritten" }],
       },
     });
   });

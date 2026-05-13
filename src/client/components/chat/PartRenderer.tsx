@@ -7,11 +7,11 @@ import { SubtaskPartView } from "./parts/SubtaskPartView";
 import { GenericPartView } from "./parts/GenericPartView";
 import { ToolPartRouter } from "./tools/router";
 
-export function PartRenderer({ part }: { part: Part }) {
+export function PartRenderer({ part, searchQuery = "" }: { part: Part; searchQuery?: string }) {
   switch (part.type) {
     case "text":
       if (part.synthetic || part.ignored) return null;
-      return <TextPartView part={part} />;
+      return <TextPartView part={part} searchQuery={searchQuery} />;
     case "reasoning":
       return <ReasoningPartView part={part} />;
     case "tool":

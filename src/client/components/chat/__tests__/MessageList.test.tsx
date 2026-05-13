@@ -15,6 +15,7 @@ type MessagesState = {
   loading: Record<string, boolean>;
   loadError: Record<string, string | undefined>;
   streaming: Record<string, boolean>;
+  sendPrompt: ReturnType<typeof mock>;
 };
 
 type StoreUpdate = Partial<MessagesState> | ((state: MessagesState) => Partial<MessagesState>);
@@ -42,7 +43,7 @@ let messagesState: MessagesState = emptyState();
 let sessionsState: SessionsState = emptySessionsState();
 
 function emptyState(): MessagesState {
-  return { sessions: {}, loading: {}, loadError: {}, streaming: {} };
+  return { sessions: {}, loading: {}, loadError: {}, streaming: {}, sendPrompt: mock(async () => {}) };
 }
 
 const useMessagesStore: MockMessagesStore = Object.assign(
@@ -221,6 +222,29 @@ describe("MessageList", () => {
     expect(first.compareDocumentPosition(assistant) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("filters and highlights current-session messages without reordering matches", () => {
+    setSession(sessionFixture(["msg_user_2", "msg_user_1", "msg_assistant_1"]));
+
+    render(<MessageList sessionID={SID} searchQuery="user" />);
+
+    const second = screen.getByText("second");
+    const first = screen.getByText("first");
+
+    expect(screen.queryByText("assistant reply")).not.toBeInTheDocument();
+    expect(second.compareDocumentPosition(first) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getAllByTestId("message-search-highlight")).toHaveLength(2);
+  });
+
+  it("shows an empty search result without mutating message order", () => {
+    const data = sessionFixture(["msg_user_2", "msg_user_1", "msg_assistant_1"]);
+    setSession(data);
+
+    render(<MessageList sessionID={SID} searchQuery="no-match" />);
+
+    expect(screen.getByText("没有匹配的消息")).toBeInTheDocument();
+    expect(messagesState.sessions[SID]!.messageOrder).toEqual(["msg_user_2", "msg_user_1", "msg_assistant_1"]);
+  });
+
   it("renders agent and model metadata for user and assistant messages", () => {
     setSession(sessionFixture(["msg_user_1", "msg_assistant_1"]));
 
@@ -254,6 +278,16 @@ describe("MessageList", () => {
     expect(sessionsState.fork).toHaveBeenCalledWith(SID, { messageID: "msg_user_1" });
     expect(sessionsState.revert).toHaveBeenCalledWith(SID, { messageID: "msg_user_1" });
     expect(sessionsState.unrevert).toHaveBeenCalledWith(SID);
+  });
+
+  it("resends user messages through the prompt edit path", async () => {
+    const user = userEvent.setup();
+    setSession(sessionFixture(["msg_user_1"]));
+
+    render(<MessageList sessionID={SID} />);
+    await user.click(screen.getByRole("button", { name: "编辑重发消息 msg_user_1" }));
+
+    expect(messagesState.sendPrompt).toHaveBeenCalledWith(SID, "first user message", { messageID: "msg_user_1" });
   });
 
   it("renders the empty state when the session has no messages", () => {

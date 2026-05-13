@@ -1,4 +1,4 @@
-import { AlertCircle, Bot, GitFork, RotateCcw, Undo2, User } from "lucide-react";
+import { AlertCircle, Bot, Edit3, GitFork, RotateCcw, Undo2, User } from "lucide-react";
 import { Avatar, Button, Spinner } from "@heroui/react";
 import type { Message, Part, Session } from "@opencode-ai/sdk/client";
 import { PartRenderer } from "./PartRenderer";
@@ -26,9 +26,11 @@ interface MessageItemProps {
   onFork?: (messageID: string) => void;
   onRevert?: (messageID: string) => void;
   onUnrevert?: () => void;
+  onEditResend?: (messageID: string) => void;
+  searchQuery?: string;
 }
 
-export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork, onRevert, onUnrevert }: MessageItemProps) {
+export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork, onRevert, onUnrevert, onEditResend, searchQuery = "" }: MessageItemProps) {
   const isUser = info.role === "user";
   const Icon = isUser ? User : Bot;
   const error = info.role === "assistant" ? info.error : undefined;
@@ -42,6 +44,7 @@ export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork
         "group flex gap-2 px-3 py-2 transition-opacity",
         isUser && "bg-content1/40",
         isAfterRevert && !isRevertPoint && "opacity-45",
+        searchQuery.trim() && "ring-1 ring-warning/30",
       )}
     >
       <Avatar
@@ -73,6 +76,18 @@ export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork
             >
               <GitFork className="h-3.5 w-3.5" />
             </Button>
+            {isUser && (
+              <Button
+                size="sm"
+                variant="light"
+                isIconOnly
+                aria-label={`编辑重发消息 ${info.id}`}
+                onPress={() => onEditResend?.(info.id)}
+                className="h-6 w-6 min-w-6"
+              >
+                <Edit3 className="h-3.5 w-3.5" />
+              </Button>
+            )}
             {isRevertPoint ? (
               <Button
                 size="sm"
@@ -106,7 +121,7 @@ export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork
           </div>
         )}
         {parts.map((p) => (
-          <PartRenderer key={p.id} part={p} />
+          <PartRenderer key={p.id} part={p} searchQuery={searchQuery} />
         ))}
         {error && (
           <div

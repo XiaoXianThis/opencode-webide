@@ -32,6 +32,15 @@ describe("CommandPalette", () => {
     await waitFor(() => expect(useWorkspaceStore.getState().activeTabId).toBe("src/store.ts"));
   });
 
+  it("opens with Cmd+K while preserving Cmd+P", async () => {
+    const user = userEvent.setup();
+    render(<CommandPalette />);
+
+    await user.keyboard("{Meta>}k{/Meta}");
+
+    expect(screen.getByRole("dialog", { name: "命令面板" })).toBeInTheDocument();
+  });
+
   it("debounces queries before calling find.files", async () => {
     const user = userEvent.setup();
     render(<CommandPalette />);

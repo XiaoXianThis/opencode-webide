@@ -154,10 +154,20 @@ describe("SessionSidebar", () => {
     });
 
     render(<SessionSidebar />);
+    await user.click(screen.getByLabelText(/^会话操作 Plain$/));
     await user.click(screen.getByLabelText(/^分享会话 Plain$/));
+    const shareMock = state.share;
+
+    cleanup();
+    state = makeState({
+      sessions: [{ ...session("shared", 200, "Shared"), share: { url: "https://share" } }],
+      activeId: "shared",
+    });
+    render(<SessionSidebar />);
+    await user.click(screen.getByLabelText(/^会话操作 Shared$/));
     await user.click(screen.getByLabelText(/^取消分享 Shared$/));
 
-    expect(state.share).toHaveBeenCalledWith("plain");
+    expect(shareMock).toHaveBeenCalledWith("plain");
     expect(state.unshare).toHaveBeenCalledWith("shared");
   });
 });

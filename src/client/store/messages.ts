@@ -1,6 +1,15 @@
 import { create } from "zustand";
-import type { Event, Message, Part } from "@opencode-ai/sdk/client";
+import type { Event, Message, Part, SessionPromptAsyncData } from "@opencode-ai/sdk/client";
 import { oc } from "@/lib/opencode";
+
+type PromptBody = NonNullable<SessionPromptAsyncData["body"]>;
+export type PromptPartInput = PromptBody["parts"][number];
+export type PromptOptions = {
+  agent?: string;
+  model?: { providerID: string; modelID: string };
+  parts?: PromptPartInput[];
+  messageID?: string;
+};
 
 interface SessionData {
   messageOrder: string[];
@@ -20,7 +29,7 @@ interface MessagesState {
   sendPrompt: (
     sessionID: string,
     text: string,
-    opts?: { agent?: string; model?: { providerID: string; modelID: string } },
+    opts?: PromptOptions,
   ) => Promise<void>;
   abort: (sessionID: string) => Promise<void>;
   applyEvent: (event: Event) => void;
@@ -110,15 +119,20 @@ export const useMessagesStore = create<MessagesState>((set, get) => ({
 
   sendPrompt: async (sessionID, text, opts) => {
     const trimmed = text.trim();
-    if (!trimmed) return;
+    const parts: PromptPartInput[] = [
+      ...(trimmed ? [{ type: "text" as const, text: trimmed }] : []),
+      ...(opts?.parts ?? []),
+    ];
+    if (parts.length === 0) return;
     set((s) => ({ streaming: { ...s.streaming, [sessionID]: true } }));
     try {
       await oc.session.promptAsync({
         path: { id: sessionID },
         body: {
+          ...(opts?.messageID ? { messageID: opts.messageID } : {}),
           ...(opts?.agent ? { agent: opts.agent } : {}),
           ...(opts?.model ? { model: opts.model } : {}),
-          parts: [{ type: "text", text: trimmed }],
+          parts,
         },
       });
     } catch (err) {
