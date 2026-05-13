@@ -118,20 +118,20 @@
 
 ## M5 会话管理
 
-- [ ] `fork({ messageID? })` + UI 入口（消息上的"分叉"图标）
+- [x] `fork({ messageID? })` + UI 入口（消息上的"分叉"图标）
   - **测试**：sessions store 调 `oc.session.fork`；返回的新会话被 setActive
-- [ ] `revert({ messageID, partID? })` / `unrevert()`
+- [x] `revert({ messageID, partID? })` / `unrevert()`
   - **测试**：reducer 拿到 `session.updated` 含 `revert` 字段时把后续消息标灰
   - **UI 测试**：被 revert 的消息渲染为半透明 + 按钮恢复
-- [ ] `share` / `unshare` + URL 复制按钮
+- [x] `share` / `unshare` + URL 复制按钮
   - **测试**：调用对应 API 并把返回 URL 写入 clipboard（mock `navigator.clipboard.writeText`）
-- [ ] `summarize({ providerID, modelID })`
+- [x] `summarize({ providerID, modelID })`
   - **测试**：触发后 sessions list 标题更新（来自 `session.updated`）
-- [ ] 标题就地编辑（双击 → input → blur 保存）
+- [x] 标题就地编辑（双击 → input → blur 保存）
   - **测试**：`SessionSidebar.test.tsx` 双击进入编辑、Enter/Esc 行为
-- [ ] 父子会话树视图（`/session/:id/children`）
+- [x] 父子会话树视图（`/session/:id/children`）
   - **测试**：sessions store 记录 children 关系；UI 缩进
-- [ ] 会话搜索（前端按 title 模糊过滤）
+- [x] 会话搜索（前端按 title 模糊过滤）
   - **测试**：debounce + 大小写不敏感
 
 ---
@@ -139,33 +139,33 @@
 ## M6 IDE 化（编辑器与文件）
 
 ### 文件树
-- [ ] `files` store：`Record<path, FileNode[]>` + 展开状态；按需 lazy load
+- [x] `files` store：`Record<path, FileNode[]>` + 展开状态；按需 lazy load
   - **测试** `files.test.ts`：`expand(path)` 调 `oc.file.list({ query: { path } })` 并写入；`refresh(path)` 重新拉取
-- [ ] `FileTree` 组件 + `FileTreeItem`
+- [x] `FileTree` 组件 + `FileTreeItem`
   - **测试** `FileTree.test.tsx`：点击目录展开；点文件触发 `openFile`；virtualization（大目录时）
-- [ ] `FileStatusBadge` 用 `/file/status` 数据染色
+- [x] `FileStatusBadge` 用 `/file/status` 数据染色
   - **测试**：modified/staged/untracked 三态图标
 
 ### 编辑器
-- [ ] 选 Monaco（默认）或 CodeMirror 6（轻量）— 之前定 Monaco
-- [ ] `workspace` store：`tabs: Tab[]`、`activeTabId`、`buffers: Record<path, string>`、`dirty: Set<path>`
+- [x] 选 Monaco（默认）或 CodeMirror 6（轻量）— 之前定 Monaco（M6 采用只读 fallback，避免测试环境挂 worker）
+- [x] `workspace` store：`tabs: Tab[]`、`activeTabId`、`buffers: Record<path, string>`、`dirty: Set<path>`
   - **测试** `workspace.test.ts`：openFile、closeTab、switchTab、edit 标记 dirty、save 后清 dirty
-- [ ] `EditorPane` 包 Monaco；`@monaco-editor/react`
+- [x] `EditorPane` 包 Monaco；`@monaco-editor/react`（M6 先落只读 fallback，写回/Monaco worker 留后续）
   - **测试** `EditorPane.test.tsx`：渲染 fallback（不 mount Monaco，因为 worker 在测试环境复杂）只测 props 传递与 ErrorBoundary
-- [ ] `EditorTabs` + 关闭按钮 + dirty 圆点
+- [x] `EditorTabs` + 关闭按钮 + dirty 圆点
   - **测试**：tabs 同步 store；关闭 dirty tab 时 confirm
-- [ ] 保存：暂时不写回文件系统（opencode 没暴露 write 端点；如果要写需走 `prompt_async + edit` 工具或 PTY）— 标 `// TODO: writeback`
+- [x] 保存：暂时不写回文件系统（opencode 没暴露 write 端点；如果要写需走 `prompt_async + edit` 工具或 PTY）— 标 `// TODO: writeback`
   - 或者：M6 只读模式，写回留 M6.1
-- [ ] `file.watcher.updated` 事件 → 自动 reload
+- [x] `file.watcher.updated` 事件 → 自动 reload
   - **测试**：events store 收到 watcher 事件后 buffers 刷新（除非 dirty）
 
 ### 命令面板
-- [ ] `Cmd+P` 打开 `CommandPalette`
+- [x] `Cmd+P` 打开 `CommandPalette`
   - tabs: 文件 / 文本 / 符号 — 分别用 `find.files` / `find.text` / `find.symbols`
   - **测试** `CommandPalette.test.tsx`：键盘上下 + Enter 跳转；查询 debounce；空结果文案；fuzzy 高亮
 
 ### VCS
-- [ ] `vcs.branch.updated` 事件展示当前分支于状态条
+- [x] `vcs.branch.updated` 事件展示当前分支于状态条
   - **测试**：连续 dispatch 几条事件后 StatusBar 显示最新
 
 ---
@@ -238,7 +238,9 @@
 - ✅ M3 per-tool 视图 + Markdown 渲染（130 pass / 6 skip / 0 fail，16 快照）
 - ✅ M4 HITL 权限审批（store + dialog + center + ChatPanel 红点；155 pass / 6 skip / 0 fail）
 - ✅ M2 补测完成（sessions/events/proxy/SSE/MessageList 已补齐；当前 `bun test` = 175 pass / 6 skip / 0 fail / 16 snapshots，共 30 个测试文件）
-- ⬜ M5 起所有里程碑
+- ✅ M5 会话管理完成（store + 会话列表编辑/搜索/分享/树 + 消息分叉/回退；M5/M6 目标测试通过）
+- ✅ M6 IDE 化完成（文件树 + 只读编辑器/标签 + 命令面板 + VCS 状态；M6 目标测试通过）
+- ⬜ M7 剩余项起所有里程碑
 
 ## UI 组件库约定（HeroUI）
 
