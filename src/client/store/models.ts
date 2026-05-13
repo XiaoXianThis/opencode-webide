@@ -25,11 +25,13 @@ interface ModelsState {
   selectedModelID: string | null;
   status: LoadStatus;
   error: string | null;
+  fallbackNotice: string | null;
 
   load: () => Promise<void>;
   select: (providerID: string, modelID: string) => void;
   /** Returns the currently selected option, or null when nothing is loaded. */
   current: () => ModelOption | null;
+  dismissFallbackNotice: () => void;
 }
 
 const STORAGE_KEY = "webide.selectedModel";
@@ -101,17 +103,10 @@ export function buildOptions(
   return out;
 }
 
-function pickInitialSelection(
+function fallbackSelection(
   options: ModelOption[],
   defaults: Record<string, string>,
-  persisted: Persisted | null,
 ): { providerID: string; modelID: string } | null {
-  if (persisted) {
-    const hit = options.find(
-      (o) => o.providerID === persisted.providerID && o.modelID === persisted.modelID,
-    );
-    if (hit) return persisted;
-  }
   const defaultEntry = Object.entries(defaults)[0];
   if (defaultEntry) {
     const [providerID, modelID] = defaultEntry;
@@ -123,6 +118,21 @@ function pickInitialSelection(
   return first ? { providerID: first.providerID, modelID: first.modelID } : null;
 }
 
+function pickInitialSelection(
+  options: ModelOption[],
+  defaults: Record<string, string>,
+  persisted: Persisted | null,
+): { selection: { providerID: string; modelID: string } | null; didFallback: boolean } {
+  if (persisted) {
+    const hit = options.find(
+      (o) => o.providerID === persisted.providerID && o.modelID === persisted.modelID,
+    );
+    if (hit) return { selection: persisted, didFallback: false };
+    return { selection: fallbackSelection(options, defaults), didFallback: true };
+  }
+  return { selection: fallbackSelection(options, defaults), didFallback: false };
+}
+
 export const useModelsStore = create<ModelsState>((set, get) => ({
   providers: [],
   defaults: {},
@@ -131,6 +141,7 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
   selectedModelID: null,
   status: "idle",
   error: null,
+  fallbackNotice: null,
 
   load: async () => {
     set({ status: "loading", error: null });
@@ -141,13 +152,17 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
       const options = buildOptions(providers, defaults);
       const persisted = readPersisted();
       const pick = pickInitialSelection(options, defaults, persisted);
+      if (pick.didFallback) writePersisted(pick.selection);
       set({
         providers,
         defaults,
         options,
-        selectedProviderID: pick?.providerID ?? null,
-        selectedModelID: pick?.modelID ?? null,
+        selectedProviderID: pick.selection?.providerID ?? null,
+        selectedModelID: pick.selection?.modelID ?? null,
         status: "ready",
+        fallbackNotice: pick.didFallback
+          ? "The previously selected model is unavailable. Switched to the default available model."
+          : null,
       });
     } catch (err) {
       set({
@@ -175,4 +190,6 @@ export const useModelsStore = create<ModelsState>((set, get) => ({
       ) ?? null
     );
   },
+
+  dismissFallbackNotice: () => set({ fallbackNotice: null }),
 }));

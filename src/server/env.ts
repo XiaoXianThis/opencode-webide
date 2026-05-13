@@ -8,6 +8,14 @@ function opencodeUrl(): string {
   return (process.env.OPENCODE_URL ?? "http://127.0.0.1:4096").replace(/\/+$/, "");
 }
 
+function hostname(): string {
+  return process.env.HOST ?? process.env.HOSTNAME ?? "127.0.0.1";
+}
+
+function webideToken(): string {
+  return process.env.WEBIDE_TOKEN ?? "";
+}
+
 function opencodeUsername(): string {
   return process.env.OPENCODE_USERNAME ?? "opencode";
 }
@@ -27,8 +35,14 @@ export const env = {
   get PORT() {
     return port();
   },
+  get HOST() {
+    return hostname();
+  },
   get OPENCODE_URL() {
     return opencodeUrl();
+  },
+  get WEBIDE_TOKEN() {
+    return webideToken();
   },
   get OPENCODE_USERNAME() {
     return opencodeUsername();

@@ -4,6 +4,20 @@ import type { Message, Part, Session } from "@opencode-ai/sdk/client";
 import { PartRenderer } from "./PartRenderer";
 import { cn } from "@/lib/utils";
 
+function messageMeta(info: Message): string {
+  if (info.role === "user") {
+    const model = info.model ? `${info.model.providerID}/${info.model.modelID}` : null;
+    return ["you", info.agent, model].filter(Boolean).join(" / ");
+  }
+  return [
+    "assistant",
+    info.mode,
+    info.providerID && info.modelID ? `${info.providerID}/${info.modelID}` : null,
+  ]
+    .filter(Boolean)
+    .join(" / ");
+}
+
 interface MessageItemProps {
   info: Message;
   parts: Part[];
@@ -44,13 +58,9 @@ export function MessageItem({ info, parts, revert, isAfterRevert = false, onFork
       </Avatar>
       <div className="flex min-w-0 flex-1 flex-col gap-1.5">
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-wide text-default-500">
-          <span>
-            {isUser
-              ? "you"
-              : `assistant${info.providerID ? ` · ${info.providerID}/${info.modelID}` : ""}`}
-          </span>
+          <span>{messageMeta(info)}</span>
           {info.role === "assistant" && info.time?.completed && (
-            <span>· {((info.time.completed - info.time.created) / 1000).toFixed(1)}s</span>
+            <span>? {((info.time.completed - info.time.created) / 1000).toFixed(1)}s</span>
           )}
           <div className="ml-auto flex items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100 focus-within:opacity-100">
             <Button

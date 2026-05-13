@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "bun --hot index.ts",
     "start": "bun index.ts",
+    "build": "bun build src/client/index.html --outdir dist/public --minify",
     "test": "bun test",
     "test:watch": "bun test --watch"
   },

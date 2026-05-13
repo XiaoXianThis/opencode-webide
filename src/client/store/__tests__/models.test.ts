@@ -67,6 +67,7 @@ beforeEach(() => {
     selectedModelID: null,
     status: "idle",
     error: null,
+    fallbackNotice: null,
   });
 });
 
@@ -143,7 +144,7 @@ describe("models store", () => {
     expect(s.selectedModelID).toBe("claude-haiku");
   });
 
-  it("load() falls back to default when persisted selection is no longer available", async () => {
+  it("load() falls back to default and surfaces a notice when persisted selection is gone", async () => {
     window.localStorage.setItem(
       STORAGE_KEY,
       JSON.stringify({ providerID: "ghost", modelID: "vapor-1" }),
@@ -160,6 +161,13 @@ describe("models store", () => {
     const s = useModelsStore.getState();
     expect(s.selectedProviderID).toBe("openai");
     expect(s.selectedModelID).toBe("gpt-5");
+    expect(s.fallbackNotice).toContain("previously selected model is unavailable");
+    expect(window.localStorage.getItem(STORAGE_KEY)).toBe(
+      JSON.stringify({ providerID: "openai", modelID: "gpt-5" }),
+    );
+
+    s.dismissFallbackNotice();
+    expect(useModelsStore.getState().fallbackNotice).toBeNull();
   });
 
   it("load() records error state when SDK throws", async () => {

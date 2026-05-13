@@ -221,6 +221,15 @@ describe("MessageList", () => {
     expect(first.compareDocumentPosition(assistant) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
   });
 
+  it("renders agent and model metadata for user and assistant messages", () => {
+    setSession(sessionFixture(["msg_user_1", "msg_assistant_1"]));
+
+    render(<MessageList sessionID={SID} />);
+
+    expect(screen.getByText("you / build / anthropic/claude-sonnet")).toBeInTheDocument();
+    expect(screen.getByText("assistant / build / anthropic/claude-sonnet")).toBeInTheDocument();
+  });
+
   it("marks messages after the revert point as muted and shows restore", () => {
     setSession(sessionFixture(["msg_user_1", "msg_assistant_1", "msg_user_2"]));
     sessionsState.sessions = [session({ revert: { messageID: "msg_assistant_1" } })];

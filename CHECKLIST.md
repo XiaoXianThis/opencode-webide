@@ -180,27 +180,27 @@
   - 显示 模型名 + provider 名 + ctx/cost 元信息；default / deprecated 用 Chip 标注
   - 集成测试 `describe.skip` 中（happy-dom 与 react-aria Popover 兼容问题，见"已知限制"）
 - [x] **`Composer` 注入 model**：发送时携带 `{ providerID, modelID }` 到 `sendPrompt`；未选中则省略（用 opencode 的 default）
-- [ ] `AgentPicker` 下拉（拉 `oc.agent.list()`）
+- [x] `AgentPicker` 下拉（拉 `oc.app.agents()`）
   - **测试** `AgentPicker.test.tsx`：搜索过滤、选中后 store 更新、空状态
-- [ ] 当前消息显示其使用的 agent + model（已部分有 `info.providerID/modelID`）
-- [ ] 模型 fallback：选中失效时 toast 提示
+- [x] 当前消息显示其使用的 agent + model（已部分有 `info.providerID/modelID`）
+- [x] 模型 fallback：选中失效时 toast 提示
 
 ---
 
 ## M8 BFF 鉴权与远程部署
 
-- [ ] BFF `WEBIDE_TOKEN` 环境变量；未配置则关闭鉴权（开发态）
-- [ ] `/api/auth/login` 接收 token，set httpOnly cookie；`/api/auth/logout` 清 cookie
-- [ ] 中间件：所有 `/api/*` 与 `/api/events` 校验 cookie
+- [x] BFF `WEBIDE_TOKEN` 环境变量；未配置则关闭鉴权（开发态）
+- [x] `/api/auth/login` 接收 token，set httpOnly cookie；`/api/auth/logout` 清 cookie
+- [x] 中间件：所有 `/api/*` 与 `/api/events` 校验 cookie
   - **测试** `auth.test.ts`：未带 cookie → 401；带正确 cookie → 透传；登入后 cookie 写入响应
-- [ ] 前端登录页（独立路由）+ 401 拦截重定向
+- [x] 前端登录页（独立路由）+ 401 拦截重定向
   - **测试** `Login.test.tsx`：错误密码报错；成功后跳回原路径
-- [ ] CSRF：cookie sameSite=strict + double-submit token 给写操作
+- [x] CSRF：cookie sameSite=strict + double-submit token 给写操作
   - **测试**：DELETE 不带 token 被拒
-- [ ] 生产构建脚本：`bun build src/client/index.html --outdir dist/public --minify`
-- [ ] 生产入口：`bun index.ts` 直接服务 `dist/public`
-- [ ] `Dockerfile`：Bun 1.3 base，多阶段构建
-- [ ] `OPENCODE_URL` 支持远程地址（不只 127.0.0.1）
+- [x] 生产构建脚本：`bun build src/client/index.html --outdir dist/public --minify`
+- [x] 生产入口：`bun index.ts` 直接服务 `dist/public`
+- [x] `Dockerfile`：Bun 1.3 base，多阶段构建
+- [x] `OPENCODE_URL` 支持远程地址（不只 127.0.0.1）
 
 ---
 
@@ -240,7 +240,8 @@
 - ✅ M2 补测完成（sessions/events/proxy/SSE/MessageList 已补齐；当前 `bun test` = 175 pass / 6 skip / 0 fail / 16 snapshots，共 30 个测试文件）
 - ✅ M5 会话管理完成（store + 会话列表编辑/搜索/分享/树 + 消息分叉/回退；M5/M6 目标测试通过）
 - ✅ M6 IDE 化完成（文件树 + 只读编辑器/标签 + 命令面板 + VCS 状态；M6 目标测试通过）
-- ⬜ M7 剩余项起所有里程碑
+- ✅ M7 Agent / 模型切换完成（AgentPicker + Composer 注入 + 消息元信息 + fallback 提示）
+- ✅ M8 BFF 鉴权与远程部署完成（WEBIDE_TOKEN + 登录/登出 + CSRF + 生产构建/静态服务 + Docker）
 
 ## UI 组件库约定（HeroUI）
 

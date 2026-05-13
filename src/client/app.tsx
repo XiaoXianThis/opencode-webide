@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { Event } from "@opencode-ai/sdk/client";
 import { useOpencodeEvents } from "@/lib/events";
 import { useMessagesStore } from "@/store/messages";
@@ -13,8 +13,14 @@ import { SessionSidebar } from "@/components/sessions/SessionSidebar";
 import { WorkspaceCenter } from "@/components/workspace/WorkspaceCenter";
 import { ChatPanel } from "@/components/chat/ChatPanel";
 import { PermissionCenter } from "@/components/permissions/PermissionCenter";
+import { Login } from "@/components/auth/Login";
+
+function canUseEvents(pathname: string): boolean {
+  return pathname !== "/login";
+}
 
 export function App() {
+  const [pathname, setPathname] = useState(() => window.location.pathname);
   const onEvent = useCallback((event: Event) => {
     useMessagesStore.getState().applyEvent(event);
     useTodosStore.getState().applyEvent(event);
@@ -31,7 +37,19 @@ export function App() {
     void useVcsStore.getState().load();
   }, []);
 
-  useOpencodeEvents({ onEvent, onReconnected });
+  useOpencodeEvents(canUseEvents(pathname) ? { onEvent, onReconnected } : {});
+
+  useEffect(() => {
+    const update = () => setPathname(window.location.pathname);
+    window.addEventListener("popstate", update);
+    window.addEventListener("webide:navigate", update);
+    return () => {
+      window.removeEventListener("popstate", update);
+      window.removeEventListener("webide:navigate", update);
+    };
+  }, []);
+
+  if (pathname === "/login") return <Login />;
 
   return (
     <div className="flex h-full w-full flex-col">

@@ -1,6 +1,19 @@
-import { describe, it, expect, beforeEach } from "bun:test";
+import { describe, it, expect, beforeEach, mock } from "bun:test";
 import type { Event, Part, UserMessage, AssistantMessage } from "@opencode-ai/sdk/client";
-import { useMessagesStore } from "../messages";
+const promptAsyncFn = mock(async (_args: {
+  path: { id: string };
+  body: {
+    agent?: string;
+    model?: { providerID: string; modelID: string };
+    parts: Array<{ type: "text"; text: string }>;
+  };
+}) => ({}));
+
+mock.module("@/lib/opencode", () => ({
+  oc: { session: { promptAsync: promptAsyncFn } },
+}));
+
+const { useMessagesStore } = await import("../messages");
 
 const SID = "ses_test_1";
 
@@ -46,11 +59,30 @@ function ev<T extends Event["type"]>(type: T, properties: unknown): Event {
 }
 
 beforeEach(() => {
+  promptAsyncFn.mockClear();
   useMessagesStore.setState({
     sessions: {},
     loading: {},
     loadError: {},
     streaming: {},
+  });
+});
+
+describe("messages.sendPrompt", () => {
+  it("sends selected agent and model with trimmed text", async () => {
+    await useMessagesStore.getState().sendPrompt(SID, "  hello  ", {
+      agent: "build",
+      model: { providerID: "anthropic", modelID: "claude-sonnet" },
+    });
+
+    expect(promptAsyncFn).toHaveBeenCalledWith({
+      path: { id: SID },
+      body: {
+        agent: "build",
+        model: { providerID: "anthropic", modelID: "claude-sonnet" },
+        parts: [{ type: "text", text: "hello" }],
+      },
+    });
   });
 });
 

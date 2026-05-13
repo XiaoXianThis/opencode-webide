@@ -1,9 +1,11 @@
 import { useEffect, useRef, useState } from "react";
-import { Send, Square } from "lucide-react";
+import { AlertCircle, Send, Square, X } from "lucide-react";
 import { Button, TextArea } from "@heroui/react";
 import { useMessagesStore } from "@/store/messages";
 import { useModelsStore } from "@/store/models";
+import { useAgentsStore } from "@/store/agents";
 import { ModelPicker } from "./ModelPicker";
+import { AgentPicker } from "./AgentPicker";
 
 export function Composer({ sessionID }: { sessionID: string }) {
   const streaming = useMessagesStore((s) => s.streaming[sessionID] ?? false);
@@ -11,6 +13,9 @@ export function Composer({ sessionID }: { sessionID: string }) {
   const abort = useMessagesStore((s) => s.abort);
   const selectedProviderID = useModelsStore((s) => s.selectedProviderID);
   const selectedModelID = useModelsStore((s) => s.selectedModelID);
+  const fallbackNotice = useModelsStore((s) => s.fallbackNotice);
+  const dismissFallbackNotice = useModelsStore((s) => s.dismissFallbackNotice);
+  const selectedAgent = useAgentsStore((s) => s.selectedAgent);
   const [text, setText] = useState("");
   const taRef = useRef<HTMLTextAreaElement>(null);
 
@@ -33,7 +38,11 @@ export function Composer({ sessionID }: { sessionID: string }) {
       selectedProviderID && selectedModelID
         ? { providerID: selectedProviderID, modelID: selectedModelID }
         : undefined;
-    void send(sessionID, text, model ? { model } : undefined);
+    const opts = {
+      ...(selectedAgent ? { agent: selectedAgent } : {}),
+      ...(model ? { model } : {}),
+    };
+    void send(sessionID, text, Object.keys(opts).length > 0 ? opts : undefined);
     setText("");
   };
 
@@ -46,7 +55,27 @@ export function Composer({ sessionID }: { sessionID: string }) {
 
   return (
     <div className="border-t border-default-200 bg-content1 p-2">
+      {fallbackNotice && (
+        <div
+          role="status"
+          className="mb-2 flex items-center gap-2 rounded-medium border border-warning bg-warning/10 px-2 py-1 text-xs text-warning-700"
+        >
+          <AlertCircle className="h-3.5 w-3.5 shrink-0" />
+          <span className="flex-1">{fallbackNotice}</span>
+          <Button
+            size="sm"
+            variant="light"
+            isIconOnly
+            aria-label="Dismiss model notice"
+            className="h-5 w-5 min-w-5 text-warning-700"
+            onPress={dismissFallbackNotice}
+          >
+            <X className="h-3 w-3" />
+          </Button>
+        </div>
+      )}
       <div className="mb-2 flex items-center gap-2">
+        <AgentPicker />
         <ModelPicker />
       </div>
       <div className="flex items-end gap-2 rounded-medium border border-default-200 bg-background p-2">

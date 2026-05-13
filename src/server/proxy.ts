@@ -3,12 +3,14 @@ import { env } from "./env";
 // Strip hop-by-hop and other headers we should not forward upstream.
 const REQ_HEADERS_BLOCKLIST = new Set([
   "host",
+  "cookie",
   "connection",
   "content-length",
   "accept-encoding",
   "transfer-encoding",
   "upgrade",
   "expect",
+  "x-csrf-token",
 ]);
 
 const RES_HEADERS_BLOCKLIST = new Set([

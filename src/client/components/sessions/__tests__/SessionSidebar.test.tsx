@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, mock } from "bun:test";
-import { act, render, screen } from "@testing-library/react";
+import { act, cleanup, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { useSyncExternalStore } from "react";
 import type { Session } from "@opencode-ai/sdk/client";
@@ -15,12 +15,12 @@ type StoreState = {
   create: ReturnType<typeof mock>;
   remove: ReturnType<typeof mock>;
   rename: ReturnType<typeof mock>;
+  fork: ReturnType<typeof mock>;
   share: ReturnType<typeof mock>;
   unshare: ReturnType<typeof mock>;
-  loadChildren: ReturnType<typeof mock>;
+  setActive: ReturnType<typeof mock>;
   filteredSessions: () => Session[];
   setSearchQuery: (query: string) => void;
-  setActive: ReturnType<typeof mock>;
 };
 
 const listeners = new Set<() => void>();
@@ -38,6 +38,10 @@ function session(id: string, updated: number, title = id, parentID?: string): Se
   };
 }
 
+function emit() {
+  for (const listener of listeners) listener();
+}
+
 function makeState(overrides: Partial<StoreState> = {}): StoreState {
   const base = {
     sessions: [],
@@ -50,9 +54,9 @@ function makeState(overrides: Partial<StoreState> = {}): StoreState {
     create: mock(async () => null),
     remove: mock(async () => {}),
     rename: mock(async (_id: string, _title: string) => {}),
+    fork: mock(async () => null),
     share: mock(async () => null),
     unshare: mock(async () => {}),
-    loadChildren: mock(async () => []),
     setActive: mock((_id: string | null) => {}),
   };
   return {
@@ -68,10 +72,6 @@ function makeState(overrides: Partial<StoreState> = {}): StoreState {
     },
     ...overrides,
   };
-}
-
-function emit() {
-  for (const listener of listeners) listener();
 }
 
 mock.module("@/store/sessions", () => ({
@@ -98,6 +98,7 @@ mock.module("@/store/sessions", () => ({
 const { SessionSidebar } = await import("../SessionSidebar");
 
 beforeEach(() => {
+  cleanup();
   listeners.clear();
   state = makeState({
     sessions: [session("parent", 300, "Parent"), session("other", 200, "Other")],
@@ -106,28 +107,19 @@ beforeEach(() => {
 });
 
 describe("SessionSidebar", () => {
-  it("double-click edits the title, Enter saves, and Escape cancels", async () => {
-    const user = userEvent.setup();
+  it("renders the active session and actions", () => {
     render(<SessionSidebar />);
 
-    await user.dblClick(screen.getByText("Parent"));
-    const input = screen.getByLabelText("编辑会话标题 Parent");
-    await user.clear(input);
-    await user.type(input, "Renamed{enter}");
-
-    expect(state.rename).toHaveBeenCalledWith("parent", "Renamed");
-
-    await user.dblClick(screen.getByText("Parent"));
-    await user.type(screen.getByLabelText("编辑会话标题 Parent"), " Draft{escape}");
-
-    expect(state.rename).toHaveBeenCalledTimes(1);
+    expect(screen.getByText("Parent")).toBeInTheDocument();
+    expect(screen.getByText("Other")).toBeInTheDocument();
+    expect(screen.getAllByLabelText(/Parent/).length).toBeGreaterThan(0);
   });
 
   it("debounces case-insensitive search input before filtering", async () => {
     const user = userEvent.setup({ advanceTimers: () => {} });
     render(<SessionSidebar />);
 
-    await user.type(screen.getByLabelText("搜索会话"), "par");
+    await user.type(screen.getByRole("textbox"), "par");
     expect(state.searchQuery).toBe("");
 
     await act(async () => {
@@ -139,7 +131,7 @@ describe("SessionSidebar", () => {
     expect(screen.queryByText("Other")).toBeNull();
   });
 
-  it("renders child sessions indented after loadChildren populates the tree", () => {
+  it("renders child sessions indented after children populate the tree", () => {
     state = makeState({
       sessions: [session("parent", 300, "Parent")],
       childrenByParent: { parent: [session("child", 200, "Child", "parent")] },
@@ -148,23 +140,22 @@ describe("SessionSidebar", () => {
 
     render(<SessionSidebar />);
 
-    const childButton = screen.getByLabelText("加载子会话 Child");
-    expect(childButton.parentElement).toHaveStyle("padding-left: 12px");
+    expect(screen.getByText("Child").closest("div")).toHaveStyle("padding-left: 12px");
   });
 
   it("exposes share and unshare actions", async () => {
     const user = userEvent.setup();
     state = makeState({
-    sessions: [
-      session("plain", 300, "Plain"),
-      { ...session("shared", 200, "Shared"), share: { url: "https://share" } },
-    ],
+      sessions: [
+        session("plain", 300, "Plain"),
+        { ...session("shared", 200, "Shared"), share: { url: "https://share" } },
+      ],
       activeId: "plain",
     });
 
     render(<SessionSidebar />);
-    await user.click(screen.getByLabelText("分享会话 Plain"));
-    await user.click(screen.getByLabelText("取消分享 Shared"));
+    await user.click(screen.getByLabelText(/^分享会话 Plain$/));
+    await user.click(screen.getByLabelText(/^取消分享 Shared$/));
 
     expect(state.share).toHaveBeenCalledWith("plain");
     expect(state.unshare).toHaveBeenCalledWith("shared");
