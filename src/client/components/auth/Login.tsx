@@ -1,8 +1,14 @@
-import { FormEvent, useState } from "react";
+import { useState } from "react";
+import type { FormEvent } from "react";
 import { Button } from "@heroui/react";
-import { loginWithToken, redirectAfterLogin } from "@/lib/auth";
+import { useLocation, useNavigate } from "react-router-dom";
+import { loginWithToken } from "@/lib/auth";
+import { useIsMobile } from "@/hooks/useIsMobile";
 
 export function Login() {
+  const location = useLocation();
+  const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [token, setToken] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
@@ -17,7 +23,9 @@ export function Login() {
       setError("Token is incorrect");
       return;
     }
-    redirectAfterLogin();
+    const params = new URLSearchParams(location.search);
+    const returnTo = params.get("returnTo");
+    navigate(returnTo?.startsWith("/") ? returnTo : isMobile ? "/m" : "/", { replace: true });
   };
 
   return (

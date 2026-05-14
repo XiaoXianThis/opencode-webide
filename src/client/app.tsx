@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect } from "react";
 import type { Event } from "@opencode-ai/sdk/client";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { useOpencodeEvents } from "@/lib/events";
 import { useMessagesStore } from "@/store/messages";
 import { useThemeStore } from "@/store/theme";
@@ -18,13 +19,42 @@ import { ChatPanel } from "@/components/chat/ChatPanel";
 import { PermissionCenter } from "@/components/permissions/PermissionCenter";
 import { ToastCenter } from "@/components/layout/ToastCenter";
 import { Login } from "@/components/auth/Login";
+import { useIsMobile } from "@/hooks/useIsMobile";
+import { MobileAppShell } from "@/components/mobile/MobileAppShell";
+import { MobileChatPage, MobileFilesPage, MobileMePage, MobileProjectsPage, MobileTerminalPage, NotFound as MobileNotFound } from "@/components/mobile/MobilePages";
 
 function canUseEvents(pathname: string): boolean {
   return pathname !== "/login";
 }
 
+function DesktopShell() {
+  return (
+    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
+      <TopBar />
+      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
+        <WorkspaceCenter />
+        <ChatPanel />
+      </div>
+      <StatusBar />
+    </div>
+  );
+}
+
+function RootRoute() {
+  return useIsMobile() ? <Navigate to="/m/chat" replace /> : <DesktopShell />;
+}
+
+function MobileRouteGuard() {
+  const isMobile = useIsMobile();
+  return isMobile ? <MobileAppShell /> : <Navigate to="/" replace />;
+}
+
+function NotFound() {
+  return <Navigate to="/" replace />;
+}
+
 export function App() {
-  const [pathname, setPathname] = useState(() => window.location.pathname);
+  const location = useLocation();
   const onEvent = useCallback((event: Event) => {
     useMessagesStore.getState().applyEvent(event);
     useTodosStore.getState().applyEvent(event);
@@ -45,34 +75,32 @@ export function App() {
     void useLspStore.getState().load();
   }, []);
 
-  useOpencodeEvents(canUseEvents(pathname) ? { onEvent, onReconnected } : {});
-
+  useOpencodeEvents(canUseEvents(location.pathname) ? { onEvent, onReconnected } : {});
   useEffect(() => {
     useThemeStore.getState().hydrate();
   }, []);
 
-  useEffect(() => {
-    const update = () => setPathname(window.location.pathname);
-    window.addEventListener("popstate", update);
-    window.addEventListener("webide:navigate", update);
-    return () => {
-      window.removeEventListener("popstate", update);
-      window.removeEventListener("webide:navigate", update);
-    };
-  }, []);
-
-  if (pathname === "/login") return <Login />;
-
   return (
-    <div className="flex h-full w-full min-w-0 flex-col overflow-hidden">
-      <TopBar />
-      <div className="flex min-h-0 min-w-0 flex-1 overflow-hidden">
-        <WorkspaceCenter />
-        <ChatPanel />
-      </div>
-      <StatusBar />
+    <>
+      <Routes>
+        <Route path="/" element={<RootRoute />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/m" element={<Navigate to="/m/chat" replace />} />
+        <Route path="/m" element={<MobileRouteGuard />}>
+          <Route path="projects" element={<MobileProjectsPage />} />
+          <Route path="chat" element={<MobileChatPage />} />
+          <Route path="chat/:sessionId" element={<MobileChatPage />} />
+          <Route path="files" element={<MobileFilesPage />} />
+          <Route path="files/*" element={<MobileFilesPage />} />
+          <Route path="terminal" element={<MobileTerminalPage />} />
+          <Route path="terminal/:ptyId" element={<MobileTerminalPage />} />
+          <Route path="me/*" element={<MobileMePage />} />
+          <Route path="*" element={<MobileNotFound />} />
+        </Route>
+        <Route path="*" element={<NotFound />} />
+      </Routes>
       <PermissionCenter />
       <ToastCenter />
-    </div>
+    </>
   );
 }

@@ -28,15 +28,13 @@ export function loginUrl(returnTo = loginReturnPath()): string {
 }
 
 export function redirectToLogin(returnTo = loginReturnPath()): void {
-  window.history.replaceState(null, "", loginUrl(returnTo));
-  window.dispatchEvent(new Event("webide:navigate"));
+  window.location.assign(loginUrl(returnTo));
 }
 
 export function redirectAfterLogin(fallback = "/"): void {
   const params = new URLSearchParams(window.location.search);
   const returnTo = params.get("returnTo") || fallback;
-  window.history.replaceState(null, "", returnTo.startsWith("/") ? returnTo : fallback);
-  window.dispatchEvent(new Event("webide:navigate"));
+  window.location.assign(returnTo.startsWith("/") ? returnTo : fallback);
 }
 
 export async function authFetch(request: Request): ReturnType<typeof fetch> {

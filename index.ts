@@ -5,7 +5,6 @@ import { authStatus, isAuthEnabled, login, logout, validateAuth } from "./src/se
 
 const isProduction = process.env.NODE_ENV === "production";
 const productionIndex = isProduction ? Bun.file("dist/public/index.html") : null;
-const developmentIndex = isProduction ? null : (await import("./src/client/index.html")).default;
 
 if (isProduction && !isAuthEnabled()) {
   throw new Error("WEBIDE_TOKEN must be set in production");
@@ -41,8 +40,8 @@ const routes = isProduction
     }
   : {
       ...apiRoutes,
-      "/": developmentIndex,
-      "/*": developmentIndex,
+      "/": (await import("./src/client/index.html")).default,
+      "/*": (await import("./src/client/index.html")).default,
     };
 
 const server = Bun.serve({
